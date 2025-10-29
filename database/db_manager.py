@@ -15,7 +15,8 @@ class DatabaseManager:
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username TEXT UNIQUE NOT NULL,
-                    password TEXT NOT NULL
+                    password TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL
                 )
             ''')
             
@@ -30,14 +31,42 @@ class DatabaseManager:
                 )
             ''')
             
+            # Locations table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS locations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    latitude REAL NOT NULL,
+                    longitude REAL NOT NULL,
+                    description TEXT,
+                    difficulty INTEGER
+                )
+            ''')
+            
+            # Game History table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS game_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    location_id INTEGER,
+                    guess_latitude REAL,
+                    guess_longitude REAL,
+                    score INTEGER,
+                    distance REAL,
+                    played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users (id),
+                    FOREIGN KEY (location_id) REFERENCES locations (id)
+                )
+            ''')
+            
             conn.commit()
 
-    def add_user(self, username, password):
+    def add_user(self, username, password, email):
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', 
-                             (username, password))
+                cursor.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', 
+                             (username, password, email))
                 conn.commit()
                 return True
         except sqlite3.IntegrityError:
@@ -46,9 +75,12 @@ class DatabaseManager:
     def verify_user(self, username, password):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', 
+            cursor.execute('SELECT id, username, email FROM users WHERE username = ? AND password = ?', 
                          (username, password))
-            return cursor.fetchone() is not None
+            user = cursor.fetchone()
+            if user:
+                return {'id': user[0], 'username': user[1], 'email': user[2]}
+            return None
 
     def save_score(self, username, score):
         with sqlite3.connect(self.db_path) as conn:

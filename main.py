@@ -3,6 +3,7 @@ from pages.home_page import HomePage
 from pages.login_page import LoginPage
 from pages.register_page import RegisterPage
 from pages.settings_page import SettingsPage
+from pages.lobby_screen import LobbyScreen  # Yeni sayfa eklendi
 
 class GeoGuessrApp(tk.Tk):
     def __init__(self):
@@ -22,7 +23,7 @@ class GeoGuessrApp(tk.Tk):
         
         # Tüm sayfaları ekle
         self.frames = {}
-        for F in (HomePage, LoginPage, RegisterPage, SettingsPage):
+        for F in (HomePage, LoginPage, RegisterPage, SettingsPage, LobbyScreen):  # LobbyScreen eklendi
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             self.frames[page_name] = frame
